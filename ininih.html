@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Untuk Freda 💕 | Harvest Moon</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 150px;
+      font-family: 'Press Start 2P', cursive;
+      color: white;
+    }
+
+    .game-screen {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      height: 480px;
+      border: 4px solid #5d4037;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    }
+
+    .bg-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 45%;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      z-index: 2;
+    }
+
+    .dialog-box {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: rgba(245, 245, 220, 0.94);
+      border: 2px solid #5d4037;
+      border-radius: 8px;
+      padding: 18px;
+      z-index: 3;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #2e2e2e;
+      white-space: pre-line;
+      opacity: 100;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .dialog-box.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .name-tag {
+      position: absolute;
+      top: -24px;
+      left: 15px;
+      background: #ffccbc;
+      padding: 4px 10px;
+      border: 1px solid #8d6e63;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #5d4037;
+    }
+
+    /* Kursor berkedip */
+    .text-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: #2e2e2e;
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Indikator "lanjut" */
+    .continue-indicator {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      font-size: 12px;
+      color: #5d4037;
+      opacity: 0;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Tombol kontrol (akan disembunyikan saat mengetik) */
+    .controls {
+      position: absolute;
+      bottom: 15px;
+      right: 25px;
+      z-index: 4;
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .controls.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .btn {
+      background: #5d4037;
+      color: #ffecb3;
+      border: none;
+      padding: 5px 10px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .btn:hover { background: #3e2723; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="game-screen">
+    <img class="bg-video" src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExOWloMWRrbHU3NGoyczZ1ZWNvYXIzazR6d3AyYm1oaWsxaWZoNXYweiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/PUiZ2FhTmEfxckUq82/giphy.gif" alt="background">
+
+    <div class="overlay"></div>
+
+    <div class="dialog-box" id="dialogBox">
+      <div class="name-tag">Sayang 💖</div>
+      <div id="dialogText"></div>
+      <div class="text-cursor" id="cursor" style="display:none;"></div>
+      <div class="continue-indicator" id="indicator">▶</div>
+    </div>
+
+    <div class="controls" id="controls">
+      <button class="btn" id="prevBtn" disabled>◀ BACK</button>
+      <button class="btn" id="nextBtn">NEXT ▶</button>
+      <button class="btn" id="restartBtn">↺ RESTART</button>
+    </div>
+  </div>
+
+  <script>
+    const messages = [
+      "haloo sayangkuuu! 👋\n\nSemangat buat tur lapangannya besok yaa! 🌾",
+      "kamu pasti bisa kok dan juga semoga lancar yaa. semangattt! 💪",
+      "Kalau kamu capek, istirahat yaaa! ❤️",
+      "dann kalau kamu butuh apa apa bilang aja ke aku ya! 😊",
+      "jangan difikirin besok gimana pokoknya enjoy ajaa. 🌼",
+      "dan... aku selalu nungguin kamu pulangggg . 💖",
+      "semangat sayang! love you the most! 🌙"
+    ];
+
+    const dialogBox = document.getElementById('dialogBox');
+    const dialogText = document.getElementById('dialogText');
+    const cursor = document.getElementById('cursor');
+    const indicator = document.getElementById('indicator');
+    const controls = document.getElementById('controls');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    let currentIndex = -1;
+    let isTyping = false;
+
+    // Suara klik halus (opsional)
+    const clickSound = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2AcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBzh8yOzihzEHCmGv6+qkXhwIM4TO8NyUQg0UXrTp7rNyIgY5hM7x2okvCBhmuO3nnk4QDFCl4fDXYhwH");
+    
+    function playClick() {
+      // Komentari baris di bawah jika tidak ingin suara
+      // clickSound.play().catch(e => console.log("Audio gagal: ", e));
+    }
+
+    function typeText(text, callback) {
+      let i = 0;
+      dialogText.innerHTML = '';
+      cursor.style.display = 'inline-block';
+      indicator.style.opacity = '0';
+      controls.classList.remove('visible');
+      isTyping = true;
+
+      const timer = setInterval(() => {
+        if (i < text.length) {
+          const char = text.charAt(i);
+          dialogText.innerHTML += char;
+          playClick();
+          i++;
+          dialogBox.scrollTop = dialogBox.scrollHeight;
+        } else {
+          clearInterval(timer);
+          cursor.style.display = 'none';
+          indicator.style.opacity = '1';
+          isTyping = false;
+          if (callback) callback();
+        }
+      }, 40); // Sedikit lebih lambat untuk nuansa "game"
+    }
+
+    function showScene() {
+      dialogBox.classList.add('active');
+      
+      if (currentIndex >= 0 && currentIndex < messages.length) {
+        typeText(messages[currentIndex], () => {
+          controls.classList.add('visible');
+          updateNav();
+        });
+      } else {
+        dialogText.textContent = "Tekan 'Next' untuk memulai...";
+        cursor.style.display = 'none';
+        indicator.style.opacity = '1';
+        controls.classList.add('visible');
+        updateNav();
+      }
+    }
+
+    function updateNav() {
+      prevBtn.disabled = currentIndex <= 0;
+      nextBtn.disabled = currentIndex >= messages.length - 1;
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if (isTyping) return;
+      if (currentIndex < messages.length - 1) {
+        currentIndex++;
+        showScene();
+      }
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (isTyping) return;
+      if (currentIndex > 0) {
+        currentIndex--;
+        showScene();
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      if (isTyping) return;
+      currentIndex = -1;
+      showScene();
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (isTyping) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        if (currentIndex < messages.length - 1) {
+          currentIndex++;
+          showScene();
+        }
+      } else if (e.key === 'ArrowLeft') {
+        if (currentIndex > 0) {
+          currentIndex--;
+          showScene();
+        }
+      }
+    });
+
+    // Start
+    window.addEventListener('load', () => {
+      setTimeout(showScene, 600);
+    });
+  </script>
+</body>
+</html>
